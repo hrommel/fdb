@@ -1,0 +1,108 @@
+
+#
+# as user postgres:
+#
+
+psql
+
+CREATE USER tux PASSWORD 'mypassword';
+
+CREATE DATABASE personalfiledb WITH OWNER = tux;
+
+\q
+
+make sure you have matching values in your ~/.fdb.conf file (see config/fdb.conf as example)
+
+#
+# as user root:
+#
+
+add these rules at the top of /var/lib/pgsql/data/pg_hba.conf:
+
+host    personalfiledb  tux          127.0.0.1/32            password
+host    personalfiledb  tux          ::1/128                 password
+
+host    personalfiledb  tux          samenet                 password
+local	personalfiledb  tux                                  password
+
+
+finally, 
+
+systemctl restart postgresql
+
+#
+# as user tux:
+#
+
+psql personalfiledb tux -W
+
+# for table types
+
+CREATE SEQUENCE type_id_seq;
+
+CREATE TABLE types
+(
+   typeid	SMALLINT NOT NULL DEFAULT nextval('type_id_seq'),
+   type		VARCHAR(32),
+   cdvformat    VARCHAR(64),
+   PRIMARY KEY(typeid)
+);
+
+ALTER SEQUENCE type_id_seq OWNED BY types.typeid;
+ALTER SEQUENCE type_id_seq RESTART;
+
+CREATE INDEX type_idx ON types (type);
+
+# for table paths
+
+CREATE SEQUENCE path_id_seq;
+
+CREATE TABLE paths
+(
+   pathid	INTEGER NOT NULL DEFAULT nextval('path_id_seq'),
+   path		VARCHAR(10240),
+   path_orig    BYTEA,
+   PRIMARY KEY(pathid)
+);
+
+ALTER SEQUENCE path_id_seq OWNED BY paths.pathid;
+ALTER SEQUENCE path_id_seq RESTART;
+
+CREATE INDEX path_idx ON paths (path);
+
+# for table files
+
+CREATE SEQUENCE file_id_seq;
+
+CREATE TABLE files
+(
+  id		INTEGER NOT NULL DEFAULT nextval('file_id_seq'),
+  sha1sum 	CHAR(28),
+  name		VARCHAR(1024),
+  name_orig     BYTEA,
+  pathid	INTEGER,
+  size		BIGINT,
+  mtime		TIMESTAMP,
+  typeid	SMALLINT,
+  cdv		VARCHAR(1024),
+  PRIMARY KEY(id),
+  FOREIGN KEY(pathid) REFERENCES paths(pathid) ON DELETE CASCADE,
+  FOREIGN KEY(typeid) REFERENCES types(typeid) ON DELETE CASCADE 
+);
+# http://en.wikipedia.org/wiki/Foreign_key
+
+ALTER SEQUENCE file_id_seq OWNED BY files.id;
+ALTER SEQUENCE file_id_seq RESTART;
+
+# the most common (and expensive) queries are:
+# SELECT * FROM files WHERE name=? AND pathid=?
+# SELECT * FROM files WHERE name=? AND pathid=? AND mtime=? AND size=?
+CREATE INDEX name_idx ON files (name);
+CREATE INDEX pathid_idx ON files (pathid);
+CREATE INDEX mtime_idx ON files (mtime);
+CREATE INDEX size_idx ON files (size);
+
+\q
+
+(EOF)
+

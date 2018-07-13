@@ -1,0 +1,43 @@
+
+Database design
+---------------
+
+(using Postgres 9+)
+
+main table:
+
+field 	example						type	size
+
+id	23908091409					INT32	4
+sha1sum	p0SiLVULm5j7+z1UdAc+Lx4H/ic			CHAR	28 (base64 encoded, in HEX this would be 40)
+name	tn_p1030354.jpg					TEXT	(UTF-8, variable, 22 in average)
+name_orig (name in original character encoding)		BYTEA	(variable, 22 in average)
+pathid	0						INT32	4	
+size	395513185					INT64	8
+mtime	2011-08-27 21:13				TIMESTAMP	8
+typeid	0						INT16	2
+cdv	(content-describing vector)			BYTEA	(variable)
+
+secondary table path ids:
+
+pathid	0						INT32	4
+path	www/htdocs/Gallery/2010_Bejing/thumbs		TEXT	(UTF-8, variable, 43 in average)
+path_orig (path in original character encoding)         BYTEA   (variable, 43 in average)
+
+secondary table for types:
+
+typeid	0						INT16	2
+type	picture						CHAR	32
+cdvformat description of format used in cdv		TEXT 	(variable, 64 in average)
+
+
+Resulting database sizes
+------------------------
+
+using real-word directories of interest
+
+                what    #files  #dirs   #types  file_size_of_DB
+notebook(2011)  /       342049  32158   8       462M
+brain(2018)     /space  799572  18903   8       1.7G
+
+
