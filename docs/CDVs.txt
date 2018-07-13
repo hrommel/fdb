@@ -1,0 +1,100 @@
+1 Finden geeigneter CDVs:
+#########################
+
+mit Gimp/ImageMagick verschiedenste Verfahren ausprobieren anhand folgender Sätze:
+
+- 2 x 3 ähnliche Bilder
+- 4 x 1 verschiedenste Bilder
+
+Studieren von Publikationen
+
+Auswahl oder Programmieren entsprechender Tools (siehe auch Sektion X unten)
+
+http://www.imagemagick.org/Usage/
+file:///usr/share/doc/packages/ImageMagick-doc/www/architecture.html
+file:///usr/share/doc/packages/ImageMagick-doc/www/magick-wand.html
+file:///usr/share/doc/packages/ImageMagick-doc/www/api/magick-image.html#MagickGetImageHistogram
+file:///usr/share/doc/packages/ImageMagick-doc/www/api/magick-image.html#MagickShaveImage
+file:///usr/share/doc/packages/ImageMagick-doc/www/api/magick-image.html#MagickSegmentImage
+
+Canny Edge Detector
+http://www.imagemagick.org/Usage/transform/#canny
+
+2 Vergleich anhand der CDV:
+###########################
+
+n = 1e6 Dateien miteinander vergleichen
+
+m = 100 Länge CDV
+
+Dm(i,j) = 3*m FLOPs für einen Vergleich CDV(i) mit CDV(j) mit quadr.Fehlersumme
+
+Ansatz ohne Partitionierung:
+----------------------------
+
+C(n) = n*(n-1)/2 * Dm ~ 10^14 FLOPS
+
+Sortieren aller Dateinsätze für alle Element: SC(n) = n*n*ln(n) = 10^12 * 6 OPS
+
+-> bei 100 GFlops (AVX2 mit Core7) -> 1000 seconds -> 16-17 m (pro Datei: 1ms)
+   bei 5 GFflops (Athlon64 X2) -> 20000 seconds -> 5-6 h (pro Datei: 20ms)
+
+-> Rechenaufwand vertretbar, da nur einmal benötigt
+
+S(n) = n*(n-1)/2 * 8 = 10^12/2 * 8 Bytes = 4TB (4 Byte für ID Element + 4 Byte für Float Dm(i,j))
+
+-> Speicheraufwand grenzwertig -> Kappungsgrenze bei zu grossem Abstand (z.B. 5% der "ähnlichsten Dateien") ?
+
+5% von 4TB = 205GB (0.2 MB pro Datei)
+
+d.h. bei drei Verschiedenen CDVs: 615 GB
+
+Ansatz mit Partitionierung:
+---------------------------
+
+ich brauche einen (mehrdimensionalen?) Partitionierungsalgorithmus, der eine math.Ordnung bzgl. Dm einhält (d.h. eine Metrik)
+
+???
+
+3 UI
+####
+
+User-Story:
+
+Auswahl eines Elementes und damit automatisch Filter auf Typ
+
+Auswahl der Filter: 
+	- Grösse (kleiner/grösser als das ausgewählte, kleiner/grösser absoluter Wert)
+	- Name (Bestandteil des Pfades, des Dateinamens, Gross-/Kleinschreibung)
+	- Orte (mehrfach)
+
+Auswahl der Vergleichkriterien:
+	- Gewichtung der unterschiedlichen CDVs (im Extremfall: kein CDV)
+	- Anzahl der maximal zu berücksichtigenden Elemente (siehe auch Kappungsgrenze oben)
+
+Aktionen:
+	- Vorschau
+	- Differenzbilder
+	- Löschen/Archivieren
+
+
+X Grundsätzliche Ideen CDVs:
+##########################
+Audio:
+	- Länge
+	- Frequenzhistogramm
+	- Amplitudenhistogramm
+
+Video:
+	- Länge
+	- ??? 
+
+Bilder:
+	- Farbhistogramm bzw. Helligkeitshistogramm
+	- Konturenrichtungen und -längen
+	- Lage und Grösse Kontur-loser Flächen
+
+Text:
+	- Sprache
+	- Anzahl der Wörter
+	- Anzahl der Sätze
